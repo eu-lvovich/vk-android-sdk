@@ -33,6 +33,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -52,6 +53,7 @@ import com.vk.api.sdk.utils.VKValidationLocker
  * Activity for showing authorization or validation WebView
  */
 open class VKWebViewAuthActivity: Activity() {
+    private val TAG = "VK_SDK"
 
     private lateinit var webView: WebView
     private lateinit var progress: ProgressBar
@@ -134,15 +136,21 @@ open class VKWebViewAuthActivity: Activity() {
 
         @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
         override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+            Log.i(TAG, "shouldOverrideUrlLoading: ${request?.url}")
             return handleUrl(request?.url.toString())
         }
 
         override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+            Log.i(TAG, "shouldOverrideUrlLoading: $url")
             return handleUrl(url)
         }
 
         private fun handleUrl(url: String?): Boolean {
-            if (url == null || !url.startsWith(params.redirectUrl)) return false
+            Log.i(TAG, "handleUrl: $url")
+            if (url == null || !url.startsWith(params.redirectUrl)) {
+                Log.i(TAG, "handleUrl: false")
+                return false
+            }
 
             val intent = Intent(VK_RESULT_INTENT_NAME)
             val extraData = url.substring(url.indexOf("#") + 1)
@@ -168,22 +176,26 @@ open class VKWebViewAuthActivity: Activity() {
 
             finish()
 
+            Log.i(TAG, "handleUrl: true")
             return true
         }
 
 
         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+            Log.i(TAG, "onPageStarted: $url")
             super.onPageStarted(view, url, favicon)
             handleUrl(url)
         }
 
         override fun onPageFinished(view: WebView?, url: String?) {
+            Log.i(TAG, "onPageFinished: $url")
             super.onPageFinished(view, url)
             if (!hasError) showWebView()
         }
 
         @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
         override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+            Log.i(TAG, "onReceivedError: ${request?.url}")
             super.onReceivedError(view, request, error)
             val description = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) error?.description?.toString() else null
             showError(view, description)
@@ -191,11 +203,13 @@ open class VKWebViewAuthActivity: Activity() {
 
         @Suppress("DEPRECATION")
         override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+            Log.i(TAG, "onReceivedError: $description")
             super.onReceivedError(view, errorCode, description, failingUrl)
             showError(view, description)
         }
 
         private fun showError(view: WebView?, description: String?) {
+            Log.i(TAG, "showError: $description")
             hasError = true
 
             val builder = AlertDialog.Builder(view?.context)
